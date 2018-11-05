@@ -1,7 +1,10 @@
 window.onload = () => {
+    const gliderGun: boolean = true;
     const boardSize = 800;
-    const boardLength = 80;
+    const boardLength = 200;
+    const percent = 3;
     let board: number[][] = [[], []];
+    const temp = [];
 
     // Get reference to canvas
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
@@ -13,50 +16,56 @@ window.onload = () => {
     for (let i = 0; i < boardLength; i++) {
         board[i] = [];
         for (let j = 0; j < boardLength; j++) {
-            board[i][j] = Math.round(Math.random());
+            board[i][j] = 0;
         }
     }
-    // Uncomment for Gosper glider gun
-    //   board[2][26] = 1, board[3][24] = 1, board[3][26] = 1, board[4][14] = 1, board[4][15] = 1, board[4][22] = 1, board[4][23] = 1, board[4][36] = 1, board[4][37] = 1, board[5][13] = 1, board[5][17] = 1, board[5][22] = 1, board[5][23] = 1, board[5][36] = 1, board[5][37] = 1, board[6][2] = 1, board[6][3] = 1, board[6][12] = 1, board[6][18] = 1, board[6][22] = 1, board[6][23] = 1, board[7][2] = 1, board[7][3] = 1, board[7][12] = 1, board[7][16] = 1, board[7][18] = 1, board[7][19] = 1, board[7][24] = 1, board[7][26] = 1, board[8][12] = 1, board[8][18] = 1, board[8][26] = 1, board[9][13] = 1, board[9][17] = 1, board[10][14] = 1, board[10][15] = 1;
+
+    if (!gliderGun) {
+        for (let i = 0; i < boardLength * boardLength / 100 * percent; i++) {
+            board[Math.floor(Math.random() * boardLength)][Math.floor(Math.random() * boardLength)] = 1;
+        }
+    } else {
+        board[26][2] = 1, board[24][3] = 1, board[26][3] = 1, board[14][4] = 1, board[15][4] = 1, board[22][4] = 1, board[23][4] = 1, board[36][4] = 1, board[37][4] = 1, board[13][5] = 1, board[17][5] = 1, board[22][5] = 1, board[23][5] = 1, board[36][5] = 1, board[37][5] = 1, board[2][6] = 1, board[3][6] = 1, board[12][6] = 1, board[18][6] = 1, board[22][6] = 1, board[23][6] = 1, board[2][7] = 1, board[3][7] = 1, board[12][7] = 1, board[16][7] = 1, board[18][7] = 1, board[19][7] = 1, board[24][7] = 1, board[26][7] = 1, board[12][8] = 1, board[18][8] = 1, board[26][8] = 1, board[13][9] = 1, board[17][9] = 1, board[14][10] = 1, board[15][10] = 1;
+    }
+    for (let i = 0; i < boardLength; i++) {
+        for (let j = 0; j < boardLength; j++) {
+            temp.push({ x: i, y: j, change: board[i][j] });
+        }
+    }
 
     // Call 'draw' function whenever browser renders a frame on the screen
     window.requestAnimationFrame(draw);
 
     function draw() {
-        const timer = setInterval(() => {
-            drawRect();
-            generateLife();
-            //        window.requestAnimationFrame(draw);
-        }, 250);
+        drawRect();
+        temp.splice(0, temp.length);
+        generateLife();
+        window.requestAnimationFrame(draw);
     }
 
     function generateLife() {
-        let temp = duplicate(board);
         for (let i = 0; i < boardLength; i++) {
             for (let j = 0; j < boardLength; j++) {
                 const neighbours = neighboursAlive(i, j);
                 if (board[i][j] === 1 && (neighbours < 2 || neighbours > 3)) {
-                    temp[i][j] = 0;
+                    temp.push({ x: i, y: j, change: 0 });
                 } else if (board[i][j] === 0 && neighbours === 3) {
-                    temp[i][j] = 1;
+                    temp.push({ x: i, y: j, change: 1 });
                 }
             }
         }
-        board = duplicate(temp);
+        for (let i = 0; i < temp.length; i++) {
+            board[temp[i].x][temp[i].y] = temp[i].change;
+        }
     }
 
     function drawRect() {
-        const cellSize = boardSize / boardLength;
-        ctx.clearRect(0, 0, boardSize, boardSize);
-        for (let i = 0; i < boardLength; i++) {
-            for (let j = 0; j < boardLength; j++) {
-                if (board[i][j] === 1) {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 1)';
-                    ctx.fillRect(cellSize * i, cellSize * j, cellSize, cellSize);
-                } else {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0)';
-                    ctx.fillRect(cellSize * i, cellSize * j, cellSize, cellSize);
-                }
+        const cellSize = Math.round(boardSize / boardLength);
+        for (let i = 0; i < temp.length; i++) {
+            if (temp[i].change === 1) {
+                ctx.fillRect(cellSize * temp[i].x, cellSize * temp[i].y, cellSize, cellSize);
+            } else {
+                ctx.clearRect(cellSize * temp[i].x, cellSize * temp[i].y, cellSize, cellSize);
             }
         }
     }
@@ -71,16 +80,5 @@ window.onload = () => {
             }
         }
         return alive;
-    }
-
-    function duplicate(ar1: number[][]) {
-        let ar2: number[][] = [[], []];
-        for (let i = 0; i < ar1.length; i++) {
-            ar2[i] = [];
-            for (let j = 0; j < ar1[i].length; j++) {
-                ar2[i][j] = ar1[i][j];
-            }
-        }
-        return ar2;
     }
 };
